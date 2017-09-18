@@ -1,12 +1,22 @@
 'use strict'
 
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
+
 var Discord = require('discord.io');
 var logger  = require('winston');
 var fetch   = require('isomorphic-unfetch');
 var express = require('express');
 var app     = express();
 var auth    = require('./auth.json');
-var config   = require('./data/twitter_config');
+var config = {
+  "consumerKey": process.env.consumerKey,
+  "consumerSecret": process.env.consumerSecret,
+  "accessToken": process.env.accessToken,
+  "accessTokenSecret": process.env.accessTokenSecret,
+  "callBackUrl": process.env.callBackUrl
+}
 var Twitter = require('twitter-node-client').Twitter;
 var twitter = new Twitter(config);
 
@@ -106,12 +116,10 @@ bot.on('message', function (user, userID, channelID, message, evt) {
         active = false;
         break;
       case 'ping':
-        if (active) {
-          bot.sendMessage({
-            to: channelID,
-            message: 'Pong!'
-          });
-        }
+        bot.sendMessage({
+          to: channelID,
+          message: 'Pong!'
+        });
       default:
       break;
     }
