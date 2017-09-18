@@ -9,7 +9,6 @@ var logger  = require('winston');
 var fetch   = require('isomorphic-unfetch');
 var express = require('express');
 var app     = express();
-var auth    = require('./auth.json');
 var config = {
   "consumerKey": process.env.consumerKey,
   "consumerSecret": process.env.consumerSecret,
@@ -27,10 +26,11 @@ app.get('/', function (req, res) {
 
 app.all('/twitter/callback', function (req, res) {
   console.log('req', req, 'res', res);
+  res.send('Hello');
 });
 
-app.listen(8080);
-console.log('listening on 8080');
+app.listen(process.env.PORT);
+console.log('listening on ', process.env.PORT);
 
 // Callback functions
 /* @TODO: Move into utility file */
@@ -60,7 +60,7 @@ var active = false;
 
 // Initialize Discord Bot
 var bot = new Discord.Client({
-  token: auth.token,
+  token: process.env.authToken,
   autorun: true
 });
 
