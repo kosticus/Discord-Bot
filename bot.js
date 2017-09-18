@@ -10,12 +10,13 @@ var fetch   = require('isomorphic-unfetch');
 var express = require('express');
 var app     = express();
 var config = {
-  "consumerKey": process.env.consumerKey,
-  "consumerSecret": process.env.consumerSecret,
-  "accessToken": process.env.accessToken,
-  "accessTokenSecret": process.env.accessTokenSecret,
-  "callBackUrl": process.env.callBackUrl
+  "consumerKey": process.env.CONSUMER_KEY,
+  "consumerSecret": process.env.CONSUMER_SECRET,
+  "accessToken": process.env.ACCESS_TOKEN,
+  "accessTokenSecret": process.env.ACCESS_TOKEN_SECRET,
+  "callbackUrl": process.env.CALLBACK_URL
 }
+var allowedUserIds = process.env.ALLOWED_USER_IDS.split(',');
 var Twitter = require('twitter-node-client').Twitter;
 var twitter = new Twitter(config);
 
@@ -25,7 +26,6 @@ app.get('/', function (req, res) {
 });
 
 app.all('/twitter/callback', function (req, res) {
-  console.log('req', req, 'res', res);
   res.send('Hello');
 });
 
@@ -57,10 +57,12 @@ logger.level = 'debug';
 
 /* Bot not active until set */
 var active = false;
+var activeChannelID;
+/* @TODO: Make this more dynamic - could be active in more channels */
 
 // Initialize Discord Bot
 var bot = new Discord.Client({
-  token: process.env.authToken,
+  token: process.env.AUTH_TOKEN,
   autorun: true
 });
 
@@ -71,8 +73,10 @@ bot.on('ready', function (evt) {
 });
 
 bot.on('message', function (user, userID, channelID, message, evt) {
-  /* On every message, if bot is active, post message to Twitter */
-  if (active && message.substring(0,1) !== '!') {
+  const authorId = evt.d.author.id;
+  if (allowedUserIds.indexOf(authorId) === -1) { return; }
+  /* On every message in active channel, if bot is active, post message to Twitter */
+  if (active && activeChannelID === channelID && message.substring(0,1) !== '!') {
 
     /* If there are attachments, upload first and then upload tweet */
     if (evt.d && evt.d.attachments) {
@@ -111,6 +115,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
     switch(cmd) {
       case 'activate':
         active = true;
+        activeChannelID = channelID;
         break;
       case 'deactivate':
         active = false;
