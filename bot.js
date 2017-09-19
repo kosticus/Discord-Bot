@@ -118,7 +118,9 @@ bot.on('message', function (user, userID, channelID, message, evt) {
         activeChannelID = channelID;
         break;
       case 'deactivate':
-        active = false;
+        if (activeChannelID === channelID) {
+          active = false;
+        }
         break;
       case 'ping':
         bot.sendMessage({
