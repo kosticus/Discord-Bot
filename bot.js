@@ -51,6 +51,7 @@ function isApprovedUser (userID) {
   return allowedUserIds.indexOf(userID) === -1 ? false : true;
 }
 function isTweetEmoji (emoji) {
+  /* Could set this as process.env variable or array if wanted */
   return emoji.id === '359826768204660737';
 }
 function tweetWithAttachments (evt, message) {
@@ -85,10 +86,8 @@ logger.add(logger.transports.Console, {
 });
 logger.level = 'debug';
 
-/* Bot not active until set */
-var active = false;
-var activeChannelID;
 /* @TODO: Make this more dynamic - could be active in more channels */
+var activeChannelID;
 
 // Initialize Discord Bot
 var bot = new Discord.Client({
@@ -106,7 +105,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
   const authorId = evt.d.author.id;
   if (!isApprovedUser(authorId)) { return; }
   /* On every message in active channel, if bot is active, post message to Twitter */
-  if (active && activeChannelID === channelID && message.substring(0,1) !== '!') {
+  if (activeChannelID === channelID && message.substring(0,1) !== '!') {
 
     /* If there are attachments, upload first and then upload tweet */
     if (evt.d && evt.d.attachments) {
@@ -127,14 +126,13 @@ bot.on('message', function (user, userID, channelID, message, evt) {
     switch(cmd) {
       case 'activate':
       /* Only allow one active channel at a time for now - @TODO: multiple active channels */
-      if (!active) {
-        active = true;
+      if (!activeChannelID) {
         activeChannelID = channelID;
       }
         break;
       case 'deactivate':
         if (activeChannelID === channelID) {
-          active = false;
+          activeChannelID = undefined;
         }
         break;
       case 'ping':
@@ -149,7 +147,6 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 });
 
 bot.on('any', function (event) {
-  // console.log('event', event);
   const type = event.t;
   const data = event.d;
   let userID;
@@ -163,11 +160,10 @@ bot.on('any', function (event) {
   if (type === 'MESSAGE_REACTION_ADD') {
     if (isApprovedUser(userID) && isTweetEmoji(data.emoji)) {
       bot.getMessage({ channelID: channelID, messageID: data.message_id }, (err, msg) => {
-        const data = msg.d;
-        if (data.attachments) {
-          tweetWithAttachments(msg);
+        if (msg.attachments) {
+          tweetWithAttachments({ d: msg }, msg.content);
         } else {
-          tweet(msg);
+          tweet(msg.content);
         }
       });
     }
