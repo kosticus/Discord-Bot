@@ -114,8 +114,11 @@ bot.on('message', function (user, userID, channelID, message, evt) {
     args = args.splice(1);
     switch(cmd) {
       case 'activate':
+      /* Only allow one active channel at a time for now - @TODO: multiple active channels */
+      if (!active) {
         active = true;
         activeChannelID = channelID;
+      }
         break;
       case 'deactivate':
         if (activeChannelID === channelID) {
