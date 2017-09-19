@@ -53,7 +53,7 @@ function isApprovedUser (userID) {
 function isTweetEmoji (emoji) {
   return emoji.id === '359826768204660737';
 }
-function tweetWithAttachments (evt) {
+function tweetWithAttachments (evt, message) {
   /* Not sure you can actually upload more than one thing at a time.... */
   return Promise.all(evt.d.attachments.map(item => {
     // do stuff
@@ -110,7 +110,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
     /* If there are attachments, upload first and then upload tweet */
     if (evt.d && evt.d.attachments) {
-      tweetWithAttachments(evt);
+      tweetWithAttachments(evt, message);
     } else {
       /* No attachments, straight tweet */
       tweet(message);
