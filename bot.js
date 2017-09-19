@@ -108,7 +108,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
   if (activeChannelID === channelID && message.substring(0,1) !== '!') {
 
     /* If there are attachments, upload first and then upload tweet */
-    if (evt.d && evt.d.attachments) {
+    if (evt.d && evt.d.attachments.length) {
       tweetWithAttachments(evt, message);
     } else {
       /* No attachments, straight tweet */
@@ -156,11 +156,16 @@ bot.on('any', function (event) {
     channelID = data.channel_id;
   }
 
-  /* @TODO: Add in count - only tweet once */
   if (type === 'MESSAGE_REACTION_ADD') {
     if (isApprovedUser(userID) && isTweetEmoji(data.emoji)) {
       bot.getMessage({ channelID: channelID, messageID: data.message_id }, (err, msg) => {
-        if (msg.attachments) {
+
+        /* Only tweet once */
+        const reactions = msg.reactions;
+        const tweetCount = reactions.find(item => isTweetEmoji(item.emoji)).count;
+        if (tweetCount > 1) { return; }
+
+        if (msg.attachments.length) {
           tweetWithAttachments({ d: msg }, msg.content);
         } else {
           tweet(msg.content);
