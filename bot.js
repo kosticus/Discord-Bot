@@ -149,7 +149,7 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 });
 
 bot.on('any', function (event) {
-  console.log('event', event);
+  // console.log('event', event);
   const type = event.t;
   const data = event.d;
   let userID;
