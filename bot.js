@@ -47,6 +47,36 @@ function postAsPromised (data) {
     }, reject, resolve)
   });
 }
+function isApprovedUser (userID) {
+  return allowedUserIds.indexOf(userID) === -1 ? false : true;
+}
+function isTweetEmoji (emoji) {
+  return emoji.id === '359826768204660737';
+}
+function tweetWithAttachments (evt) {
+  /* Not sure you can actually upload more than one thing at a time.... */
+  return Promise.all(evt.d.attachments.map(item => {
+    // do stuff
+    return fetch(item.url)
+      .then(res => res.buffer())
+      .then(buffer => buffer.toString('base64'))
+      .then(data => postAsPromised(data))
+      .then(data => JSON.parse(data).media_id_string)
+      .catch(console.log); /* @TODO: Better error handling, possibly don't even tweet without image? */
+  }))
+  .then(array => {
+    const string = array.join(',');
+    twitter.postTweet({
+      status: message,
+      media_ids: string
+    }, error, success)
+  })
+}
+function tweet (message) {
+  return twitter.postTweet({
+    status: message
+  }, error, success);
+}
 
 // Configure logger settings
 logger.remove(logger.transports.Console);
@@ -74,34 +104,16 @@ bot.on('ready', function (evt) {
 
 bot.on('message', function (user, userID, channelID, message, evt) {
   const authorId = evt.d.author.id;
-  if (allowedUserIds.indexOf(authorId) === -1) { return; }
+  if (!isApprovedUser(authorId)) { return; }
   /* On every message in active channel, if bot is active, post message to Twitter */
   if (active && activeChannelID === channelID && message.substring(0,1) !== '!') {
 
     /* If there are attachments, upload first and then upload tweet */
     if (evt.d && evt.d.attachments) {
-      /* Not sure you can actually upload more than one thing at a time.... */
-      Promise.all(evt.d.attachments.map(item => {
-        // do stuff
-        return fetch(item.url)
-          .then(res => res.buffer())
-          .then(buffer => buffer.toString('base64'))
-          .then(data => postAsPromised(data))
-          .then(data => JSON.parse(data).media_id_string)
-          .catch(console.log); /* @TODO: Better error handling, possibly don't even tweet without image? */
-      }))
-        .then(array => {
-          const string = array.join(',');
-          twitter.postTweet({
-            status: message,
-            media_ids: string
-          }, error, success)
-        })
+      tweetWithAttachments(evt);
     } else {
-      /* No attachments, do a straight tweet */
-      twitter.postTweet({
-        status: message
-      }, error, success);
+      /* No attachments, straight tweet */
+      tweet(message);
     }
   }
 
@@ -137,10 +149,29 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 });
 
 bot.on('any', function (event) {
-  // console.log('event', event);
+  console.log('event', event);
   const type = event.t;
   const data = event.d;
-  /* @TODO: Look into reaction-based messaging */
+  let userID;
+  let channelID;
+  if (data) {
+    userID = data.user_id;
+    channelID = data.channel_id;
+  }
+
+  /* @TODO: Add in count - only tweet once */
+  if (type === 'MESSAGE_REACTION_ADD') {
+    if (isApprovedUser(userID) && isTweetEmoji(data.emoji)) {
+      bot.getMessage({ channelID: channelID, messageID: data.message_id }, (err, msg) => {
+        const data = msg.d;
+        if (data.attachments) {
+          tweetWithAttachments(msg);
+        } else {
+          tweet(msg);
+        }
+      });
+    }
+  }
 });
 
 bot.on('disconnect', function (errMsg, code) {
