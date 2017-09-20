@@ -52,7 +52,7 @@ function isApprovedUser (userID) {
 }
 function isTweetEmoji (emoji) {
   /* Could set this as process.env variable or array if wanted */
-  return emoji.id === '359826768204660737';
+  return emoji.id === '359826768204660737' || emoji.name === 'tweet';
 }
 function tweetWithAttachments (evt, message) {
   /* Not sure you can actually upload more than one thing at a time.... */
@@ -162,13 +162,14 @@ bot.on('any', function (event) {
 
         /* Only tweet once */
         const reactions = msg.reactions;
+        console.log('reactions', reactions);
         const tweetCount = reactions.find(item => isTweetEmoji(item.emoji)).count;
         if (tweetCount > 1) { return; }
 
         if (msg.attachments.length) {
-          tweetWithAttachments({ d: msg }, msg.content);
+          // tweetWithAttachments({ d: msg }, msg.content);
         } else {
-          tweet(msg.content);
+          // tweet(msg.content);
         }
       });
     }
