@@ -109,9 +109,11 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 
     /* If there are attachments, upload first and then upload tweet */
     if (evt.d && evt.d.attachments.length) {
+      console.log('tweeting with attachments from active');
       tweetWithAttachments(evt, message);
     } else {
       /* No attachments, straight tweet */
+      console.log('tweeting from active');
       tweet(message);
     }
   }
@@ -127,18 +129,20 @@ bot.on('message', function (user, userID, channelID, message, evt) {
       case 'activate':
       /* Only allow one active channel at a time for now - @TODO: multiple active channels */
       if (!activeChannelID) {
+        console.log('activating ', channelID);
         activeChannelID = channelID;
       }
         break;
       case 'deactivate':
         if (activeChannelID === channelID) {
+          console.log('deactivating ', channelID);
           activeChannelID = undefined;
         }
         break;
       case 'ping':
         bot.sendMessage({
           to: channelID,
-          message: 'Pong!'
+          message: 'alive'
         });
       default:
       break;
@@ -162,15 +166,21 @@ bot.on('any', function (event) {
         if (msg) {
           /* Only tweet once */
           const reactions = msg.reactions;
-          console.log('reactions', reactions);
           const tweetCount = reactions.find(item => isTweetEmoji(item.emoji)).count;
-          if (tweetCount > 1) { return; }
+          if (tweetCount > 1) {
+            console.log('more than one reaction')
+            return;
+          }
   
           if (msg.attachments.length) {
-            // tweetWithAttachments({ d: msg }, msg.content);
+            console.log('tweeting with attachments from reaction');
+            tweetWithAttachments({ d: msg }, msg.content);
           } else {
-            // tweet(msg.content);
+            console.log('tweeting from reaction')
+            tweet(msg.content);
           }
+        } else {
+          console.log('no message found', channelID, data.message_id);
         }
       });
     }
