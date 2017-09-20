@@ -156,20 +156,21 @@ bot.on('any', function (event) {
     channelID = data.channel_id;
   }
 
-  if (type === 'MESSAGE_REACTION_ADD') {
+  if (type === 'MESSAGE_REACTION_ADD' && channelID && data.message_id) {
     if (isApprovedUser(userID) && isTweetEmoji(data.emoji)) {
       bot.getMessage({ channelID: channelID, messageID: data.message_id }, (err, msg) => {
-
-        /* Only tweet once */
-        const reactions = msg.reactions;
-        console.log('reactions', reactions);
-        const tweetCount = reactions.find(item => isTweetEmoji(item.emoji)).count;
-        if (tweetCount > 1) { return; }
-
-        if (msg.attachments.length) {
-          // tweetWithAttachments({ d: msg }, msg.content);
-        } else {
-          // tweet(msg.content);
+        if (msg) {
+          /* Only tweet once */
+          const reactions = msg.reactions;
+          console.log('reactions', reactions);
+          const tweetCount = reactions.find(item => isTweetEmoji(item.emoji)).count;
+          if (tweetCount > 1) { return; }
+  
+          if (msg.attachments.length) {
+            // tweetWithAttachments({ d: msg }, msg.content);
+          } else {
+            // tweet(msg.content);
+          }
         }
       });
     }
