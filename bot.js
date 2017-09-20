@@ -52,7 +52,7 @@ function isApprovedUser (userID) {
 }
 function isTweetEmoji (emoji) {
   /* Could set this as process.env variable or array if wanted */
-  return emoji.id === '359826768204660737' || emoji.name === 'tweet';
+  return emoji.id === '359853241728499713' || emoji.name === 'tweet';
 }
 function tweetWithAttachments (evt, message) {
   /* Not sure you can actually upload more than one thing at a time.... */
